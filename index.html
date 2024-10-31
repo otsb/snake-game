@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>🐍</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         /* Keep all existing styles */
         body {
@@ -213,8 +214,24 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const GRID_SIZE = 20;
-        const GRID_COUNT = canvas.width / GRID_SIZE;
+        let GRID_SIZE, GRID_COUNT;
+
+        function resizeGame() {
+            if (window.innerHeight > window.innerWidth) {
+                // Portrait
+                canvas.width = canvas.height = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.7);
+            } else {
+                // Landscape
+                canvas.width = canvas.height = window.innerHeight * 0.5;
+            }
+            GRID_SIZE = canvas.width / 20; // 20x20 grid
+            GRID_COUNT = 20;
+            
+            // Force a redraw if game is running
+            if (!isGameOver && snake) {
+                draw();
+            }
+        }
     
         let snake, food, powerUp, score, highScore = 0, gameLoop, powerUpActive, powerUpTimer;
         let gameSpeed = 100;
@@ -244,6 +261,7 @@
             
             // Make startGame available globally but enhanced
             window.startGame = function() {
+                resizeGame();
                 // Reset game over display if it was shown
                 document.getElementById('gameOver').style.display = 'none';
                 
@@ -795,6 +813,8 @@
                 }
             }
 
+            window.addEventListener('resize', resizeGame);
+
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !gameStarted) {
                     event.preventDefault();
@@ -893,6 +913,41 @@
                 if (event.key === 'Enter' && isGameOver) {
                     event.preventDefault();
                     window.startGame();
+                }
+            });
+
+            // Add touch support
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            canvas.addEventListener('touchstart', (event) => {
+                event.preventDefault();
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+            });
+
+            canvas.addEventListener('touchend', (event) => {
+                event.preventDefault();
+                const touchEndX = event.changedTouches[0].clientX;
+                const touchEndY = event.changedTouches[0].clientY;
+                
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Horizontal swipe
+                    if (deltaX > 0 && direction !== 'left') {
+                        newDirection = 'right';
+                    } else if (deltaX < 0 && direction !== 'right') {
+                        newDirection = 'left';
+                    }
+                } else {
+                    // Vertical swipe
+                    if (deltaY > 0 && direction !== 'up') {
+                        newDirection = 'down';
+                    } else if (deltaY < 0 && direction !== 'down') {
+                        newDirection = 'up';
+                    }
                 }
             });
 
