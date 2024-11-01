@@ -142,6 +142,34 @@
             animation: snakeMove 4s infinite ease-in-out;
         }
 
+        #fullscreenButton {
+            background: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        #fullscreenButton:hover {
+            background: #45a049;
+        }
+
+        /* Add these to handle fullscreen better */
+        :fullscreen {
+            background: #1a1a1a;
+        }
+
+        :-webkit-full-screen {
+            background: #1a1a1a;
+        }
+
+        :-ms-fullscreen {
+            background: #1a1a1a;
+        }
+
         @keyframes snakeMove {
             0% { transform: translate(0, 0) scale(1); }
             25% { transform: translate(100px, 50px) scale(1.2); }
@@ -188,6 +216,90 @@
             touch-action: none;
             margin: auto;
         }
+
+        #mobileControls {
+            display: none;
+            position: relative;
+            margin: 20px auto;
+            width: 180px;
+            height: 180px;
+        }
+
+        .control-btn {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+            border-radius: 12px;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .control-btn:active {
+            background: rgba(76, 175, 80, 0.5);
+            transform: scale(0.95);
+        }
+
+        #upBtn {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #downBtn {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #leftBtn {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #rightBtn {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+
+            /* Add spacing between game and controls */
+            #gameContainer {
+                margin-bottom: 20px;
+            }
+            
+            /* Adjust game container padding to accommodate controls */
+            body {
+                padding-bottom: 30px;
+            }
+            
+            /* Make sure controls don't overlap with other elements */
+            #controls {
+                margin-bottom: 180px;
+            }
+        }
+
+        /* additional adjustments for very small screens */
+        @media (max-height: 600px) {
+            #mobileControls {
+                transform: scale(0.8); /* Make controls slightly smaller */
+                margin: 10px auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -196,6 +308,7 @@
         <div class="snake-decoration"></div>
         <h1>🐍 Super Snake Adventure 🎮</h1>
         <button id="startButton">Start Game</button>
+        <button id="fullscreenButton" style="margin-top: 10px;">Go Fullscreen</button>
     </div>
 
     <!-- Game Screen -->
@@ -209,6 +322,12 @@
             <button onclick="window.startGame()">Play Again</button>
         </div>
     </div>
+    <div id="mobileControls">
+        <div id="upBtn" class="control-btn">⬆️</div>
+        <div id="downBtn" class="control-btn">⬇️</div>
+        <div id="leftBtn" class="control-btn">⬅️</div>
+        <div id="rightBtn" class="control-btn">➡️</div>
+    </div>
     <div id="controls">Try pressing two arrow keys at once! ✨</div>
     
     <script>
@@ -219,10 +338,10 @@
         function resizeGame() {
             if (window.innerHeight > window.innerWidth) {
                 // Portrait
-                canvas.width = canvas.height = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.7);
+                canvas.width = canvas.height = Math.min(window.innerWidth * 1.1, window.innerHeight * 0.9);
             } else {
                 // Landscape
-                canvas.width = canvas.height = window.innerHeight * 0.5;
+                canvas.width = canvas.height = window.innerHeight * 1.1;
             }
             GRID_SIZE = canvas.width / 20; // 20x20 grid
             GRID_COUNT = 20;
@@ -230,6 +349,59 @@
             // Force a redraw if game is running
             if (!isGameOver && snake) {
                 draw();
+            }
+        }
+
+        function attemptFullScreen() {
+            // Check if the browser supports fullscreen
+            const elem = document.documentElement;
+            
+            try {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => console.log(err));
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } catch (error) {
+                console.log("Fullscreen error:", error);
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement && // standard
+                !document.webkitFullscreenElement && // webkit
+                !document.msFullscreenElement) { // IE
+                // Request fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Handle fullscreen change events
+        function handleFullscreenChange() {
+            const fullscreenButton = document.getElementById('fullscreenButton');
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.msFullscreenElement) {
+                fullscreenButton.textContent = 'Exit Fullscreen';
+            } else {
+                fullscreenButton.textContent = 'Go Fullscreen';
             }
         }
     
@@ -240,8 +412,68 @@
         let isGameOver = false;
         let hueShift = 0;
 
+        function setupMobileControls() {
+            const buttons = {
+                upBtn: 'up',
+                downBtn: 'down',
+                leftBtn: 'left',
+                rightBtn: 'right'
+            };
+
+            Object.entries(buttons).forEach(([btnId, dir]) => {
+                const btn = document.getElementById(btnId);
+                
+                // Handle touch events
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if ((dir === 'up' && direction !== 'down') ||
+                        (dir === 'down' && direction !== 'up') ||
+                        (dir === 'left' && direction !== 'right') ||
+                        (dir === 'right' && direction !== 'left')) {
+                        newDirection = dir;
+                    }
+                });
+
+                // Handle mouse events for testing on desktop
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if ((dir === 'up' && direction !== 'down') ||
+                        (dir === 'down' && direction !== 'up') ||
+                        (dir === 'left' && direction !== 'right') ||
+                        (dir === 'right' && direction !== 'left')) {
+                        newDirection = dir;
+                    }
+                });
+            });
+        }
+
+        function updateMobileControlsVisibility() {
+            const mobileControls = document.getElementById('mobileControls');
+            if (window.innerWidth <= 768) {
+                mobileControls.style.display = 'block';
+            } else {
+                mobileControls.style.display = 'none';
+            }
+        }
+
         // Wait for DOM to be fully loaded
         window.addEventListener('DOMContentLoaded', () => {
+            // Try to go fullscreen immediately
+            attemptFullScreen();
+            
+            // Also try when the user interacts with the page for the first time
+            const handleFirstInteraction = () => {
+                attemptFullScreen();
+                // Remove the event listeners after first interaction
+                document.removeEventListener('click', handleFirstInteraction);
+                document.removeEventListener('touchstart', handleFirstInteraction);
+                document.removeEventListener('keydown', handleFirstInteraction);
+            };
+
+            document.addEventListener('click', handleFirstInteraction);
+            document.addEventListener('touchstart', handleFirstInteraction);
+            document.addEventListener('keydown', handleFirstInteraction);
+
             // Add start button listener
             const startButton = document.getElementById('startButton');
             
@@ -276,6 +508,13 @@
                 
                 // Make sure canvas is focused for controls
                 canvas.focus();
+            };
+
+            // Save the original startGame function and create new one
+            const originalStartGame = window.startGame;
+            window.startGame = function() {
+                setupMobileControls();
+                originalStartGame();
             };
 
             function getSegmentColor(index, total) {
@@ -813,7 +1052,10 @@
                 }
             }
 
-            window.addEventListener('resize', resizeGame);
+            window.addEventListener('resize', () => {
+                resizeGame();
+                updateMobileControlsVisibility();
+            });
 
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !gameStarted) {
@@ -822,37 +1064,68 @@
                 }
             });
 
-            startButton.addEventListener('click', () => {
+            document.getElementById('fullscreenButton').addEventListener('click', toggleFullScreen);
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+            startButton.addEventListener('click', async () => {
                 if (gameStarted) return;
                 gameStarted = true;
-
-                // Hide start screen with fade out effect
+                
+                // First attempt fullscreen
+                await attemptFullScreen();
+                
                 const startScreen = document.getElementById('startScreen');
                 startScreen.style.opacity = '0';
                 startScreen.style.transition = 'opacity 0.5s ease-out';
                 
-                setTimeout(() => {
-                    // Hide start screen
+                setTimeout(async () => {
                     startScreen.style.display = 'none';
                     
-                    // Show game elements with fade in
+                    // Second attempt fullscreen
+                    await attemptFullScreen();
+                    
                     const gameElements = [
                         document.getElementById('gameContainer'),
                         document.getElementById('scoreBoard'),
                         document.getElementById('powerUpStatus'),
-                        document.getElementById('controls')
+                        document.getElementById('controls'),
+                        document.getElementById('mobileControls')
                     ];
                     
                     gameElements.forEach(element => {
-                        element.style.display = 'block';
+                        element.style.display = window.innerWidth <= 768 || element !== document.getElementById('mobileControls') ? 'block' : 'none';
                         element.style.opacity = '0';
                         element.style.transition = 'opacity 0.5s ease-out';
                         setTimeout(() => element.style.opacity = '1', 50);
                     });
-        
-                    // Start the game
-                    window.startGame();
+
+                    // Third attempt fullscreen after a short delay
+                    setTimeout(async () => {
+                        await attemptFullScreen();
+                        window.startGame();
+                    }, 100);
                 }, 500);
+            });
+
+            // Add fullscreen check and retry during gameplay
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && gameStarted) {
+                    attemptFullScreen();
+                }
+            });
+
+            document.addEventListener('webkitfullscreenchange', () => {
+                if (!document.webkitFullscreenElement && gameStarted) {
+                    attemptFullScreen();
+                }
+            });
+
+            document.addEventListener('msfullscreenchange', () => {
+                if (!document.msFullscreenElement && gameStarted) {
+                    attemptFullScreen();
+                }
             });
 
             // Event listeners
